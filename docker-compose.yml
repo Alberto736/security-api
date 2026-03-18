@@ -1,9 +1,9 @@
-mongo:
+services:
+  mongo:
     image: mongo:5.0.28
     ports:
       - "27017:27017"
     restart: always
-    # Eliminamos el healthcheck por ahora para que no bloquee la API
     environment:
       - MONGO_INITDB_ROOT_USERNAME=user
       - MONGO_INITDB_ROOT_PASSWORD=password
@@ -13,6 +13,12 @@ mongo:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
 
   api:
-    # ... resto de tu config ...
+    build: 
+      context: .
+      dockerfile: api.Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGO_URI=mongodb://user:password@mongo:27017/hermod?authSource=admin
     depends_on:
-      - mongo # Sin la condición de healthy para que arranque sí o sí
+      - mongo
