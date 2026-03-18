@@ -7,7 +7,7 @@ import requests
 
 app = FastAPI()
 
-MONGO_URL = os.environ.get("MONGO_URL")
+MONGO_URL = os.environ.get("MONGO_URI")
 NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 NOTIFY_SEVERITIES = {"CRITICAL", "HIGH"}
 
