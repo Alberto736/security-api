@@ -12,7 +12,7 @@ NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 NOTIFY_SEVERITIES = {"CRITICAL", "HIGH"}
 
 client = MongoClient(MONGO_URL)
-db = client["security"]
+db = client["hermod"]
 inventario = db["inventario"]
 
 def query_nvd(keyword):
