@@ -7,10 +7,13 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - MONGO_URI=mongodb://admin:password@mongo:27017/hermod?authSource=user
+      # CORRECCIÓN: El usuario es 'user', no 'admin'
+      # Y el authSource suele ser 'admin' (donde vive el root) o 'hermod'
+      - MONGO_URI=mongodb://user:password@mongo:27017/hermod?authSource=admin
     depends_on:
       mongo:
         condition: service_healthy
+
   mongo:
     image: mongo:5.0.28-rc0-focal
     ports:
