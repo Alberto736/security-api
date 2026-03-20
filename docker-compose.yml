@@ -9,7 +9,7 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=password
       - MONGO_INITDB_DATABASE=hermod
     volumes:
-      - ./mongodb/data:/data/db
+      - mongo_data:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
 
   api:
@@ -19,6 +19,14 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - MONGO_URI=mongodb://user:password@mongo:27017/hermod?authSource=admin
+      - MONGO_URI=mongodb://user:password@mongo:27017/hermod?authSource=hermod
+      - API_KEY=${API_KEY:-}
+      - API_KEY_HEADER=${API_KEY_HEADER:-X-API-Key}
+      - API_KEY_REQUIRED=${API_KEY_REQUIRED:-false}
+      - REQUEST_TIMEOUT_SECONDS=${REQUEST_TIMEOUT_SECONDS:-10}
+      - REQUEST_DELAY_SECONDS=${REQUEST_DELAY_SECONDS:-0.35}
     depends_on:
       - mongo
+
+volumes:
+  mongo_data:
