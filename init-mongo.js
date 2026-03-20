@@ -1,14 +1,12 @@
-// Mongo init script executed by the official mongo image on first startup.
-// It creates an application user scoped to the `hermod` database.
-//
-// Note: this file is executed by the legacy `mongo` shell (no process.env).
+// MongoDB initialization script
+// Creates application user for the hermod database
 db = db.getSiblingDB("hermod");
 
 db.createUser({
   user: "user",
-  pwd: "password",
+  pwd: "change_this_password_in_production",
   roles: [{ role: "readWrite", db: "hermod" }],
 });
 
-print("App user created for hermod database");
+print("Application user created for hermod database");
 
