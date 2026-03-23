@@ -1,7 +1,7 @@
 # Security API
 
-[![CI/CD Pipeline](https://github.com/yourorg/security-api/actions/workflows/ci.yml/badge.svg)](https://github.com/yourorg/security-api/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/yourorg/security-api/branch/main/graph/badge.svg)](https://codecov.io/gh/yourorg/security-api)
+[![CI/CD Pipeline](https://github.com/Alberto736/security-api/actions/workflows/ci.yml/badge.svg)](https://github.com/Alberto736/security-api/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Alberto736/security-api/branch/main/graph/badge.svg)](https://codecov.io/gh/Alberto736/security-api)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 
