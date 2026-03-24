@@ -177,7 +177,6 @@ jobs:
           echo "Skipping Docker push - no login credentials"
           # Build only, don't push
           docker buildx build \
-            --context . \
             --file ./api.Dockerfile \
             --tag alberto736/security-api:latest \
             --output type=docker \
