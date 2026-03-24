@@ -52,6 +52,7 @@ app = FastAPI(
 )
 
 # Add CORS middleware (configure properly for production)
+settings = get_settings()  # ← MOVER SETTINGS AQUÍ
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

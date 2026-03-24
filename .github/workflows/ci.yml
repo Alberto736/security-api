@@ -51,7 +51,7 @@ jobs:
           pip install -e .[dev]
 
       - name: Run Ruff linting
-        run: ruff check app/ tests/ --format=github
+        run: ruff check app/ tests/
 
       - name: Run MyPy type checking
         run: mypy app/ --ignore-missing-imports
