@@ -131,7 +131,7 @@ async def health_check(
 ) -> HealthResponse:
     """
     Comprehensive health check endpoint.
-    
+
     Returns:
         Health status with detailed component checks
     """
@@ -188,7 +188,7 @@ async def health_check(
 async def simple_health_check() -> dict[str, str]:
     """
     Simple health check for load balancers.
-    
+
     Returns:
         Simple status response
     """

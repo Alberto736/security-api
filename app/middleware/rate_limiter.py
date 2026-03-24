@@ -50,12 +50,12 @@ class InMemoryRateLimiter:
     ) -> Tuple[bool, Dict[str, int]]:
         """
         Check if request is allowed based on rate limit.
-        
+
         Args:
             key: Client identifier
             limit: Number of requests allowed
             window: Time window in seconds
-            
+
         Returns:
             Tuple of (is_allowed, rate_limit_info)
         """

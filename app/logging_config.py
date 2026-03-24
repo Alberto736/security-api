@@ -14,7 +14,7 @@ from pythonjsonlogger import jsonlogger
 def setup_logging(log_level: str = "INFO", json_logs: bool = False) -> None:
     """
     Configure structured logging for the application.
-    
+
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         json_logs: Whether to output JSON logs (useful for production)
