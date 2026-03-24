@@ -364,6 +364,6 @@ class TestHTTPService:
         mock_make_request = AsyncMock(side_effect=exceptions)
         
         result = await request_with_retries(mock_make_request, retries=2)
-        
+
         assert result is not None
         assert mock_make_request.call_count == 3
