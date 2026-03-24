@@ -26,7 +26,7 @@ FastAPI-based API for security vulnerability scanning and inventory management w
 ### Docker (Recommended)
 
 ```bash
-git clone https://github.com/yourorg/security-api.git
+git clone https://github.com/Alberto736/security-api.git
 cd security-api
 cp .env.example .env
 # Edit .env with your configuration
@@ -40,7 +40,7 @@ docker compose up --build
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-pip install -r requirements-dev.txt
+pip install -e .[dev]
 
 # Start MongoDB
 docker run -d -p 27017:27017 --name mongo mongo:5.0
@@ -58,8 +58,6 @@ uvicorn main:app --host 0.0.0.0 --port 3000 --reload
 | `GET` | `/health` | Comprehensive health check | No |
 | `GET` | `/health/simple` | Basic health check | No |
 | `POST` | `/inventario` | Submit inventory for vulnerability scanning | Yes |
-| `GET` | `/inventario` | List all inventories | Yes |
-| `GET` | `/inventario/{repo}` | Get specific inventory | Yes |
 
 ### Authentication
 
