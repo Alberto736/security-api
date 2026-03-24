@@ -45,8 +45,8 @@ async def check_database(settings: Settings, request: Request) -> Dict[str, Any]
         }
 
 
-async def check_external_apis() -> Dict[str, Any]:
-    """Check external API availability."""
+async def check_external_services() -> Dict[str, Any]:
+    """Check external API services status."""
     results = {}
     
     # Check NVD API
@@ -54,13 +54,20 @@ async def check_external_apis() -> Dict[str, Any]:
         import httpx
         async with httpx.AsyncClient(timeout=5.0) as client:
             response = await client.get("https://services.nvd.nist.gov/rest/json/cves/2.0")
-            results["nvd_api"] = {
-                "status": "healthy" if response.status_code == 200 else "error",
-                "status_code": response.status_code
-            }
+            if response.status_code == 200:
+                results["nvd_api"] = {
+                    "status": "healthy",
+                    "status_code": response.status_code
+                }
+            else:
+                results["nvd_api"] = {
+                    "status": "degraded",
+                    "status_code": response.status_code,
+                    "message": f"Unexpected status code: {response.status_code}"
+                }
     except Exception as e:
         results["nvd_api"] = {
-            "status": "error",
+            "status": "degraded",
             "message": str(e)
         }
     
@@ -72,13 +79,20 @@ async def check_external_apis() -> Dict[str, Any]:
                 "https://api.osv.dev/v1/query",
                 json={"package": {"name": "test", "ecosystem": "npm"}}
             )
-            results["osv_api"] = {
-                "status": "healthy" if response.status_code in [200, 400] else "error",  # 400 is ok for test query
-                "status_code": response.status_code
-            }
+            if response.status_code in [200, 400]:  # 400 is ok for test query
+                results["osv_api"] = {
+                    "status": "healthy",
+                    "status_code": response.status_code
+                }
+            else:
+                results["osv_api"] = {
+                    "status": "degraded",
+                    "status_code": response.status_code,
+                    "message": f"Unexpected status code: {response.status_code}"
+                }
     except Exception as e:
         results["osv_api"] = {
-            "status": "error",
+            "status": "degraded",
             "message": str(e)
         }
     
@@ -133,10 +147,12 @@ async def health_check(
         overall_status = "error"
     
     # External APIs check
-    api_checks = await check_external_apis()
+    api_checks = await check_external_services()
     checks["external_apis"] = api_checks
     if any(check["status"] == "error" for check in api_checks.values()):
         overall_status = "error"
+    elif any(check["status"] == "degraded" for check in api_checks.values()) and overall_status == "ok":
+        overall_status = "degraded"
     
     # Memory check
     memory_check = await check_memory_usage()

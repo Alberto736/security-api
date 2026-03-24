@@ -61,4 +61,9 @@ class SimpleRateLimiter(BaseHTTPMiddleware):
         ]
         
         # Check if under limit
-        return len(self.requests[client_ip]) < self.requests_per_minute
+        if len(self.requests[client_ip]) < self.requests_per_minute:
+            # Record this request
+            self.requests[client_ip].append(now)
+            return True
+        
+        return False

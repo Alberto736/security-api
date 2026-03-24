@@ -107,7 +107,7 @@ class InventoryPostResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    status: Literal["ok", "error"] = "ok"
+    status: Literal["ok", "error", "degraded"] = "ok"
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     version: str = Field(default="0.1.0")
     environment: str = Field(default="development")

@@ -49,7 +49,7 @@ async def recibir_inventario(
             ecosystem = dep.ecosystem
 
             # NVD
-            for finding in await query_nvd(settings, client, name):
+            for finding in await query_nvd(settings, client, name, version):
                 if finding.severity not in {"CRITICAL", "HIGH"}:
                     continue
                 if finding.cve_id in seen:
