@@ -68,7 +68,13 @@ jobs:
           mypy app/ --ignore-missing-imports || true  # Allow MyPy to fail for now
 
       - name: Check code formatting
-        run: ruff format --check app/ tests/
+        run: |
+          ruff format app/ tests/
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git diff --staged --quiet || git commit -m "style: Auto-format code with ruff"
+          ruff format --check app/ tests/
 
       - name: Run pre-commit hooks
         run: |

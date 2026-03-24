@@ -102,8 +102,7 @@ addopts = [
     "--cov=app",
     "--cov-report=term-missing",
     "--cov-report=html:htmlcov",
-    "--cov-fail-under=80",
-    "--asyncio_mode=auto"
+    "--cov-fail-under=80"
 ]
 markers = [
     "unit: Unit tests (fast, no external dependencies)",
@@ -115,6 +114,7 @@ filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning"
 ]
+asyncio_mode = "auto"
 
 [tool.mypy]
 python_version = "3.11"
