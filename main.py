@@ -13,6 +13,9 @@ from app.logging_config import setup_logging, get_logger
 from app.middleware.error_handler import add_error_handlers
 from app.middleware.request_logging import RequestLoggingMiddleware
 
+# Get settings at module level for middleware
+settings = get_settings()
+
 
 def _configure_logging() -> None:
     logging.basicConfig(
@@ -23,8 +26,11 @@ def _configure_logging() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    settings = get_settings()
-    
+    # Create settings + Mongo lazily so importing doesn't require env vars.
+    mongo = Mongo(settings)
+    app.state.mongo = mongo
+    app.state.settings = settings
+
     # Setup structured logging
     setup_logging(
         log_level=settings.log_level,
@@ -32,11 +38,6 @@ async def lifespan(app: FastAPI):
     )
     logger = get_logger(__name__)
     logger.info("Starting security-api", version="0.1.0")
-
-    # Create settings + Mongo lazily so importing doesn't require env vars.
-    mongo = Mongo(settings)
-    app.state.mongo = mongo
-    app.state.settings = settings
 
     async with mongo_lifespan(mongo):
         logger.info("Application ready")
@@ -52,7 +53,6 @@ app = FastAPI(
 )
 
 # Add CORS middleware (configure properly for production)
-settings = get_settings()  # ← MOVER SETTINGS AQUÍ
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
