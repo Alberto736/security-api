@@ -7,8 +7,8 @@ class Settings(BaseSettings):
 
     # MongoDB settings
     mongo_uri: str = Field(alias="MONGO_URI")
-    mongo_db: str = Field(default="hermod", alias="MONGO_DB")
-    mongo_inventory_collection: str = Field(default="inventario", alias="MONGO_INVENTORY_COLLECTION")
+    mongo_db: str = Field(default="security_api", alias="MONGO_DB")
+    mongo_inventory_collection: str = Field(default="inventory", alias="MONGO_INVENTORY_COLLECTION")
 
     # External API settings
     nvd_api_url: str = Field(default="https://services.nvd.nist.gov/rest/json/cves/2.0", alias="NVD_API_URL")
