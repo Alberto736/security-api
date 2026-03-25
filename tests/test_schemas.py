@@ -44,7 +44,7 @@ class TestDependencyItem:
             DependencyItem(name="")
         
         errors = exc_info.value.errors()
-        assert any("cannot be empty" in str(error) for error in errors)
+        assert any("String should have at least 1 character" in str(error) for error in errors)
     
     @pytest.mark.unit
     def test_dependency_item_invalid_name_injection(self):
@@ -150,7 +150,7 @@ class TestInventoryIn:
             InventoryIn(repo="test", dependencias=dependencies)
         
         errors = exc_info.value.errors()
-        assert any("Too many dependencies" in str(error) for error in errors)
+        assert any("List should have at most 1000 items" in str(error) for error in errors)
 
 
 class TestAlert:
