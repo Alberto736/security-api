@@ -44,10 +44,10 @@ python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -e .[dev]
 
-# Start MongoDB
-docker run -d -p 27017:27017 --name mongo mongo:5.0
+# Copy environment configuration
+cp .env.local .env
 
-# Start API
+# Start API (MongoDB should be running)
 uvicorn main:app --host 0.0.0.0 --port 3000 --reload
 ```
 
@@ -60,6 +60,8 @@ uvicorn main:app --host 0.0.0.0 --port 3000 --reload
 | `GET` | `/health` | Comprehensive health check | No |
 | `GET` | `/health/simple` | Basic health check | No |
 | `POST` | `/inventario` | Submit inventory for vulnerability scanning | Yes |
+| `GET` | `/inventario` | Get all stored inventories | Yes |
+| `GET` | `/inventario/{repo}` | Get inventory by repository name | Yes |
 
 ### Authentication
 
@@ -119,16 +121,21 @@ curl -X POST "http://localhost:3000/inventario" \
 
 ```bash
 # Database
-MONGO_URI=mongodb://user:password@localhost:27017/security_api
+MONGO_URI=mongodb://user:password@localhost:27017/security_api?authSource=security_api
 MONGO_DB=security_api
 MONGO_INVENTORY_COLLECTION=inventory
 
 # Security
 API_KEY=your_secure_api_key
+API_KEY_HEADER=X-API-Key
 API_KEY_REQUIRED=true
 RATE_LIMIT_ENABLED=true
 RATE_LIMIT_REQUESTS=100
 RATE_LIMIT_WINDOW=60
+
+# External APIs
+NVD_API_KEY=your_nvd_api_key
+USER_AGENT=security-api/0.1.0
 
 # Logging
 LOG_LEVEL=INFO
@@ -136,11 +143,30 @@ JSON_LOGS=false
 
 # CORS
 CORS_ORIGINS=["*"]
+CORS_ALLOW_CREDENTIALS=true
+
+# Request Configuration
+REQUEST_TIMEOUT_SECONDS=10
+REQUEST_DELAY_SECONDS=0.35
+MAX_REQUEST_SIZE=10485760
+
+# Environment
+ENVIRONMENT=development
+DEBUG=false
 ```
 
 ### Production Configuration
 
-Copy `.env.production` to `.env` and update with production values before deployment.
+For production deployment:
+1. Copy `.env.production` to `.env`
+2. Update with your production values
+3. Ensure MongoDB is accessible with proper authentication
+4. Configure secure API keys and CORS origins
+
+```bash
+cp .env.production .env
+# Edit .env with production values
+```
 
 ## Testing
 
@@ -183,10 +209,12 @@ pre-commit run --all-files
 ### Docker Production
 
 ```bash
+# Copy production configuration
 cp .env.production .env
 # Edit .env with production values
 
-docker compose -f docker-compose.yml --env-file .env up -d
+# Deploy with Docker Compose
+docker compose -f docker-compose.yml up -d
 ```
 
 ### Health Monitoring
@@ -197,6 +225,9 @@ curl http://localhost:3000/health
 
 # Basic health check (for load balancers)
 curl http://localhost:3000/health/simple
+
+# Check API status
+curl http://localhost:3000/health | jq '.status'
 ```
 
 ## Architecture
