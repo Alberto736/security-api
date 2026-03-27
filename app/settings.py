@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env.local", env_file_encoding="utf-8", extra="ignore")
 
     # MongoDB settings
-    mongo_uri: str = Field(alias="MONGO_URI")
+    mongo_uri: str = Field(default="mongodb://localhost:27017/security_api", alias="MONGO_URI")
     mongo_db: str = Field(default="security_api", alias="MONGO_DB")
     mongo_inventory_collection: str = Field(default="inventory", alias="MONGO_INVENTORY_COLLECTION")
 

@@ -19,8 +19,11 @@ router = APIRouter(
 
 def _inventory_collection(settings: Settings, request: Request):
     mongo = getattr(request.app.state, "mongo", None)
-    if mongo is None:
-        raise RuntimeError("Mongo not configured in app state")
+    if mongo is None or not mongo.is_connected:
+        raise HTTPException(
+            status_code=503,
+            detail="Database service unavailable. MongoDB is not connected."
+        )
     return mongo.db[settings.mongo_inventory_collection]
 
 

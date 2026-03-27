@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import logging
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
@@ -12,8 +13,21 @@ class Mongo:
         self._db: AsyncIOMotorDatabase | None = None
 
     async def connect(self) -> None:
-        self._client = AsyncIOMotorClient(self._settings.mongo_uri)
-        self._db = self._client[self._settings.mongo_db]
+        try:
+            self._client = AsyncIOMotorClient(
+                self._settings.mongo_uri,
+                serverSelectionTimeoutMS=5000,  # 5 seconds timeout
+                connectTimeoutMS=5000,
+                socketTimeoutMS=5000
+            )
+            # Test the connection
+            await self._client.admin.command('ping')
+            self._db = self._client[self._settings.mongo_db]
+        except Exception as e:
+            logging.warning(f"MongoDB connection failed: {e}")
+            # Don't raise exception, allow API to work without MongoDB
+            self._client = None
+            self._db = None
 
     async def close(self) -> None:
         if self._client is not None:
@@ -24,8 +38,12 @@ class Mongo:
     @property
     def db(self) -> AsyncIOMotorDatabase:
         if self._db is None:
-            raise RuntimeError("Mongo is not connected")
+            raise RuntimeError("MongoDB not connected. Database operations are not available.")
         return self._db
+
+    @property
+    def is_connected(self) -> bool:
+        return self._db is not None
 
 
 @asynccontextmanager

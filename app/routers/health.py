@@ -24,24 +24,35 @@ async def check_database(settings: Settings, request: Request) -> Dict[str, Any]
                 "message": "MongoDB not configured"
             }
         
-        # Test database connection
-        db: AsyncIOMotorDatabase = mongo.db
-        await db.command("ping")
+        # Check if MongoDB is connected
+        if not mongo.is_connected:
+            return {
+                "status": "error",
+                "message": "MongoDB not connected"
+            }
         
-        # Check collection exists and is accessible
-        collection = db[settings.mongo_inventory_collection]
-        await collection.count_documents({}, limit=1)
+        # Test database connection with timeout
+        try:
+            db: AsyncIOMotorDatabase = mongo.db
+            await db.command("ping")
+            return {
+                "status": "healthy",
+                "message": "Database connection successful"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Database connection failed: {str(e)[:100]}"
+            }
         
         return {
             "status": "healthy",
             "message": "Database connection successful"
         }
     except Exception as e:
-        logger = get_logger("health")
-        logger.error("Database health check failed", error=str(e))
         return {
             "status": "error",
-            "message": f"Database connection failed: {str(e)}"
+            "message": f"Database check failed: {str(e)[:100]}"
         }
 
 
