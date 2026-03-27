@@ -1,0 +1,211 @@
+{
+  "name": "Aquiles Security API - Simple Vulnerability Scanner",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "security-scan",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [180, 300],
+      "webhookId": "security-scan"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-ngrok-url.ngrok.io/inventario",
+        "authentication": "headerAuth",
+        "nodeAuthenticationType": "httpHeaderAuth",
+        "headerAuth": {
+          "name": "X-API-Key",
+          "value": "test_api_key"
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "json",
+              "value": "={{ $json }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "call-security-api",
+      "name": "Call Security API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "vulnerability-found",
+              "leftValue": "={{ $json.alertas_encontradas }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-vulnerabilities",
+      "name": "Check Vulnerabilities",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "json",
+              "value": "={{ {\n  \"text\": \"🚨 *Vulnerability Alert!*\n\n*Repository*: {{ $json.repo }}\\n*Vulnerabilities Found*: {{ $json.alertas_encontradas }}\\n*Details*: {{ $json.detalle }}\\n\\n🔗 *API*: Aquiles Security API\\n📅 *Date*: {{ $now }}\",\n  \"username\": \"Aquiles Security Scanner\",\n  \"icon_emoji\": \":shield:\"\n} }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "slack-alert",
+      "name": "Send Slack Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"status\": \"success\",\n  \"message\": \"Security scan completed for {{ $json.repo }}\",\n  \"vulnerabilities_found\": {{ $json.alertas_encontradas }},\n  \"timestamp\": \"{{ $now }}\"\n} }}"
+      },
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"status\": \"success\",\n  \"message\": \"No vulnerabilities found for {{ $json.repo }}\",\n  \"timestamp\": \"{{ $now }}\"\n} }}"
+      },
+      "id": "no-vulns-response",
+      "name": "No Vulnerabilities Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 500]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call Security API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Security API": {
+      "main": [
+        [
+          {
+            "node": "Check Vulnerabilities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Vulnerabilities": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Vulnerabilities Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Slack Alert": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "aquiles-security-api-workflow",
+  "tags": [
+    {
+      "createdAt": "2026-03-27T13:30:00.000Z",
+      "updatedAt": "2026-03-27T13:30:00.000Z",
+      "id": "security",
+      "name": "security"
+    }
+  ]
+}
