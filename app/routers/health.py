@@ -1,12 +1,12 @@
-from datetime import datetime, timezone
-from typing import Any, Dict
+from datetime import UTC, datetime
+from typing import Any
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Depends, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
+from app.logging_config import get_logger
 from app.schemas import HealthResponse
 from app.settings import Settings, get_settings
-from app.logging_config import get_logger
 
 router = APIRouter(
     prefix="/health",
@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 
-async def check_database(settings: Settings, request: Request) -> Dict[str, Any]:
+async def check_database(request: Request) -> dict[str, Any]:
     """Check database connectivity."""
     try:
         mongo = getattr(request.app.state, "mongo", None)
@@ -23,14 +23,14 @@ async def check_database(settings: Settings, request: Request) -> Dict[str, Any]
                 "status": "error",
                 "message": "MongoDB not configured"
             }
-        
+
         # Check if MongoDB is connected
         if not mongo.is_connected:
             return {
                 "status": "error",
                 "message": "MongoDB not connected"
             }
-        
+
         # Test database connection with timeout
         try:
             db: AsyncIOMotorDatabase = mongo.db
@@ -44,7 +44,7 @@ async def check_database(settings: Settings, request: Request) -> Dict[str, Any]
                 "status": "error",
                 "message": f"Database connection failed: {str(e)[:100]}"
             }
-        
+
         return {
             "status": "healthy",
             "message": "Database connection successful"
@@ -56,10 +56,10 @@ async def check_database(settings: Settings, request: Request) -> Dict[str, Any]
         }
 
 
-async def check_external_services() -> Dict[str, Any]:
+async def check_external_services() -> dict[str, Any]:
     """Check external API services status."""
     results = {}
-    
+
     # Check NVD API
     try:
         import httpx
@@ -81,7 +81,7 @@ async def check_external_services() -> Dict[str, Any]:
             "status": "degraded",
             "message": str(e)
         }
-    
+
     # Check OSV API
     try:
         import httpx
@@ -106,17 +106,17 @@ async def check_external_services() -> Dict[str, Any]:
             "status": "degraded",
             "message": str(e)
         }
-    
+
     return results
 
 
-async def check_memory_usage() -> Dict[str, Any]:
+async def check_memory_usage() -> dict[str, Any]:
     """Check memory usage."""
     try:
         import psutil
         process = psutil.Process()
         memory_info = process.memory_info()
-        
+
         return {
             "status": "healthy",
             "rss_mb": round(memory_info.rss / 1024 / 1024, 2),
@@ -147,16 +147,16 @@ async def health_check(
         Health status with detailed component checks
     """
     logger = get_logger("health")
-    
+
     checks = {}
     overall_status = "ok"
-    
+
     # Database check
-    db_check = await check_database(settings, request)
+    db_check = await check_database(request)
     checks["database"] = db_check
     if db_check["status"] != "healthy":
         overall_status = "error"
-    
+
     # External APIs check
     api_checks = await check_external_services()
     checks["external_apis"] = api_checks
@@ -164,13 +164,13 @@ async def health_check(
         overall_status = "error"
     elif any(check["status"] == "degraded" for check in api_checks.values()) and overall_status == "ok":
         overall_status = "degraded"
-    
+
     # Memory check
     memory_check = await check_memory_usage()
     checks["memory"] = memory_check
     if memory_check["status"] == "error":
         overall_status = "error"
-    
+
     # Security configuration check
     checks["security"] = {
         "status": "healthy",
@@ -178,17 +178,17 @@ async def health_check(
         "rate_limit_enabled": settings.rate_limit_enabled,
         "cors_configured": len(settings.cors_origins) > 0
     }
-    
+
     # Log health check
     logger.info(
         "Health check performed",
         overall_status=overall_status,
         checks_count=len(checks)
     )
-    
+
     return HealthResponse(
         status=overall_status,
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         version="0.1.0",
         environment=settings.environment,
         checks=checks
