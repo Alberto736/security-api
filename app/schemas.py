@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal
 
-from pydantic import BaseModel, Field, validator, HttpUrl
+from pydantic import BaseModel, Field, field_validator, HttpUrl
 import re
 
 
@@ -13,7 +13,8 @@ class DependencyItem(BaseModel):
     version: str | None = Field(default=None, max_length=50, description="Package version")
     ecosystem: Ecosystem = Field(default="npm", description="Package ecosystem")
     
-    @validator('name')
+    @field_validator('name')
+    @classmethod
     def validate_name(cls, v):
         """Validate package name for security."""
         if not v or not v.strip():
@@ -36,7 +37,8 @@ class DependencyItem(BaseModel):
         
         return v
     
-    @validator('version')
+    @field_validator('version')
+    @classmethod
     def validate_version(cls, v):
         """Validate package version for security."""
         if v is None:
@@ -53,9 +55,10 @@ class DependencyItem(BaseModel):
 
 class InventoryIn(BaseModel):
     repo: str = Field(min_length=1, max_length=255, description="Repository identifier")
-    dependencias: list[DependencyItem] = Field(default_factory=list, max_items=1000, description="List of dependencies")
+    dependencias: list[DependencyItem] = Field(default_factory=list, max_length=1000, description="List of dependencies")
     
-    @validator('repo')
+    @field_validator('repo')
+    @classmethod
     def validate_repo(cls, v):
         """Validate repository name for security."""
         if not v or not v.strip():
@@ -76,7 +79,8 @@ class InventoryIn(BaseModel):
         
         return v
     
-    @validator('dependencias')
+    @field_validator('dependencias')
+    @classmethod
     def validate_dependencies(cls, v):
         """Validate dependencies list."""
         if len(v) > 1000:
@@ -108,7 +112,7 @@ class InventoryPostResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: Literal["ok", "error", "degraded"] = "ok"
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     version: str = Field(default="0.1.0")
     environment: str = Field(default="development")
     checks: dict[str, dict] = Field(default_factory=dict)

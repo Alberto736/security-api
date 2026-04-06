@@ -24,6 +24,8 @@ _ECOSYSTEM_MAP: dict[str, str] = {
 @dataclass(frozen=True)
 class OsvFinding:
     cve_id: str
+    severity: str = "UNKNOWN"
+    score: float = 0.0
 
 
 async def query_osv(client: httpx.AsyncClient, *, name: str, version: str | None, ecosystem: str) -> list[OsvFinding]:
@@ -50,5 +52,20 @@ async def query_osv(client: httpx.AsyncClient, *, name: str, version: str | None
         osv_id = v.get("id") or "UNKNOWN"
         aliases = v.get("aliases") or []
         cve_id = next((a for a in aliases if isinstance(a, str) and a.startswith("CVE-")), osv_id)
-        out.append(OsvFinding(cve_id=cve_id))
+        
+        # Extract severity and score from OSV data
+        severity = "UNKNOWN"
+        score = 0.0
+        
+        # Check database_specific severity if available
+        db_specific = v.get("database_specific", {})
+        if db_specific:
+            severity = db_specific.get("severity", "UNKNOWN").upper()
+            score = float(db_specific.get("cvss_score", 0.0))
+        
+        # Fallback to severity field if database_specific not available
+        if severity == "UNKNOWN" and "severity" in v:
+            severity = str(v["severity"]).upper()
+        
+        out.append(OsvFinding(cve_id=cve_id, severity=severity, score=score))
     return out

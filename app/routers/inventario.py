@@ -80,8 +80,8 @@ async def recibir_inventario(
                         name=name,
                         version=version,
                         cve_id=finding.cve_id,
-                        severity="HIGH",
-                        score=7.5,
+                        severity=finding.severity,
+                        score=finding.score,
                         source="OSV",
                     )
                 )

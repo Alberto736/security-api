@@ -7,7 +7,8 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
-from fastapi import Request, HTTPException, status
+from fastapi import Request, status
+from fastapi.responses import JSONResponse
 
 from app.logging_config import get_logger, log_security_event
 
@@ -89,7 +90,7 @@ class InMemoryRateLimiter:
         return is_allowed, {
             "limit": limit,
             "remaining": max(0, limit - current_count - (1 if not is_allowed else 0)),
-            "reset_time": int(window_start + window + window)
+            "reset_time": int(now + window)
         }
     
     def reset(self, key: str) -> None:
@@ -102,7 +103,7 @@ class InMemoryRateLimiter:
 rate_limiter = InMemoryRateLimiter()
 
 
-async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded) -> HTTPException:
+async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
     """Handle rate limit exceeded exceptions."""
     logger = get_logger("security")
     
@@ -118,9 +119,9 @@ async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded)
         )
     )
     
-    raise HTTPException(
+    return JSONResponse(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        detail={
+        content={
             "error": "Rate limit exceeded",
             "message": str(exc),
             "retry_after": 60  # Suggest retry after 1 minute

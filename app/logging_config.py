@@ -4,7 +4,7 @@ Logging configuration for structured, production-ready logging.
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import structlog
@@ -88,7 +88,7 @@ def log_request_info(request_id: str, method: str, path: str, **kwargs) -> Dict[
         "request_id": request_id,
         "method": method,
         "path": path,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         **kwargs
     }
 
@@ -98,6 +98,6 @@ def log_security_event(event_type: str, severity: str, **kwargs) -> Dict[str, An
     return {
         "event_type": event_type,
         "severity": severity,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         **kwargs
     }

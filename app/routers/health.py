@@ -64,7 +64,11 @@ async def check_external_services() -> dict[str, Any]:
     try:
         import httpx
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get("https://services.nvd.nist.gov/rest/json/cves/2.0")
+            # Add required keywordSearch parameter to avoid 400 error
+            response = await client.get(
+                "https://services.nvd.nist.gov/rest/json/cves/2.0",
+                params={"keywordSearch": "test"}  # Required parameter
+            )
             if response.status_code == 200:
                 results["nvd_api"] = {
                     "status": "healthy",

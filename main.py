@@ -12,6 +12,7 @@ from app.settings import get_settings
 from app.logging_config import setup_logging, get_logger
 from app.middleware.error_handler import add_error_handlers
 from app.middleware.request_logging import RequestLoggingMiddleware
+from app.middleware.simple_rate_limiter import SimpleRateLimiter
 
 # Get settings at module level for middleware
 settings = get_settings()
@@ -60,6 +61,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add rate limiting middleware if enabled
+if settings.rate_limit_enabled:
+    app.add_middleware(
+        SimpleRateLimiter,
+        requests_per_minute=settings.rate_limit_requests
+    )
 
 # Add request logging middleware
 app.add_middleware(RequestLoggingMiddleware)
