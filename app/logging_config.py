@@ -1,11 +1,10 @@
 """
 Logging configuration for structured, production-ready logging.
 """
-import json
 import logging
 import sys
-from datetime import datetime, timezone
-from typing import Any, Dict
+from datetime import UTC, datetime
+from typing import Any
 
 import structlog
 from pythonjsonlogger import jsonlogger
@@ -19,19 +18,19 @@ def setup_logging(log_level: str = "INFO", json_logs: bool = False) -> None:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         json_logs: Whether to output JSON logs (useful for production)
     """
-    
+
     # Remove default handlers
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
-    
+
     # Set log level
     level = getattr(logging, log_level.upper(), logging.INFO)
     root_logger.setLevel(level)
-    
+
     # Configure console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(level)
-    
+
     if json_logs:
         # JSON formatter for production
         formatter = jsonlogger.JsonFormatter(
@@ -44,10 +43,10 @@ def setup_logging(log_level: str = "INFO", json_logs: bool = False) -> None:
             fmt='%(asctime)s [%(levelname)8s] %(name)s: %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
-    
+
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
-    
+
     # Configure structlog
     structlog.configure(
         processors=[
@@ -75,29 +74,29 @@ def get_logger(name: str) -> structlog.stdlib.BoundLogger:
 
 class LoggerMixin:
     """Mixin class to add logging capabilities to any class."""
-    
+
     @property
     def logger(self) -> structlog.stdlib.BoundLogger:
         """Get logger for this class."""
         return get_logger(self.__class__.__name__)
 
 
-def log_request_info(request_id: str, method: str, path: str, **kwargs) -> Dict[str, Any]:
+def log_request_info(request_id: str, method: str, path: str, **kwargs) -> dict[str, Any]:
     """Create structured log context for HTTP requests."""
     return {
         "request_id": request_id,
         "method": method,
         "path": path,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         **kwargs
     }
 
 
-def log_security_event(event_type: str, severity: str, **kwargs) -> Dict[str, Any]:
+def log_security_event(event_type: str, severity: str, **kwargs) -> dict[str, Any]:
     """Create structured log context for security events."""
     return {
         "event_type": event_type,
         "severity": severity,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         **kwargs
     }

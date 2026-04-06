@@ -2,18 +2,16 @@
 Pytest configuration and fixtures for Security API tests.
 """
 import asyncio
-import os
-from typing import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
-from motor.motor_asyncio import AsyncIOMotorClient
 
-from main import app
-from app.settings import Settings, get_settings
 from app.db import Mongo
+from app.settings import Settings, get_settings
+from main import app
 
 
 @pytest.fixture(scope="session")
@@ -45,12 +43,12 @@ def test_client(test_settings: Settings) -> TestClient:
     """Create a test client with overridden settings."""
     def override_get_settings():
         return test_settings
-    
+
     app.dependency_overrides[get_settings] = override_get_settings
-    
+
     with TestClient(app) as client:
         yield client
-    
+
     # Clean up
     app.dependency_overrides.clear()
 
@@ -60,12 +58,12 @@ async def async_test_client(test_settings: Settings) -> AsyncGenerator[AsyncClie
     """Create an async test client with overridden settings."""
     def override_get_settings():
         return test_settings
-    
+
     app.dependency_overrides[get_settings] = override_get_settings
-    
+
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
-    
+
     # Clean up
     app.dependency_overrides.clear()
 
@@ -75,7 +73,7 @@ async def test_mongo(test_settings: Settings) -> AsyncGenerator[Mongo, None]:
     """Create a test MongoDB connection."""
     mongo = Mongo(test_settings)
     await mongo.connect()
-    
+
     try:
         # Clean up test data before each test
         await mongo.db[test_settings.mongo_inventory_collection].delete_many({})

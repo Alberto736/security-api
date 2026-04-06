@@ -1,9 +1,8 @@
-from datetime import datetime, timezone
+import re
+from datetime import UTC, datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, HttpUrl
-import re
-
+from pydantic import BaseModel, Field, field_validator
 
 Ecosystem = Literal["npm", "pip", "maven", "gradle", "composer", "nuget", "rubygems", "cargo", "golang", "docker"]
 
@@ -12,17 +11,17 @@ class DependencyItem(BaseModel):
     name: str = Field(min_length=1, max_length=255, description="Package name")
     version: str | None = Field(default=None, max_length=50, description="Package version")
     ecosystem: Ecosystem = Field(default="npm", description="Package ecosystem")
-    
+
     @field_validator('name')
     @classmethod
-    def validate_name(cls, v):
+    def validate_name(cls, v: str) -> str:
         """Validate package name for security."""
         if not v or not v.strip():
             raise ValueError("Package name cannot be empty")
-        
+
         # Remove potential injection attempts
         v = v.strip()
-        
+
         # Check for suspicious patterns
         suspicious_patterns = [
             r'[<>]',  # HTML tags
@@ -30,62 +29,62 @@ class DependencyItem(BaseModel):
             r'\.\./',  # Path traversal
             r'javascript:',  # XSS
         ]
-        
+
         for pattern in suspicious_patterns:
             if re.search(pattern, v, re.IGNORECASE):
                 raise ValueError(f"Invalid characters in package name: {v}")
-        
+
         return v
-    
+
     @field_validator('version')
     @classmethod
-    def validate_version(cls, v):
+    def validate_version(cls, v: str | None) -> str | None:
         """Validate package version for security."""
         if v is None:
             return v
-        
+
         v = v.strip()
-        
+
         # Basic semantic version pattern
         if not re.match(r'^[\w\.\-+]+$', v):
             raise ValueError(f"Invalid version format: {v}")
-        
+
         return v
 
 
 class InventoryIn(BaseModel):
     repo: str = Field(min_length=1, max_length=255, description="Repository identifier")
     dependencias: list[DependencyItem] = Field(default_factory=list, max_length=1000, description="List of dependencies")
-    
+
     @field_validator('repo')
     @classmethod
-    def validate_repo(cls, v):
+    def validate_repo(cls, v: str) -> str:
         """Validate repository name for security."""
         if not v or not v.strip():
             raise ValueError("Repository name cannot be empty")
-        
+
         v = v.strip()
-        
+
         # Check for suspicious patterns
         suspicious_patterns = [
             r'[<>]',  # HTML tags
             r'[;&|`$]',  # Command injection
             r'\.\./',  # Path traversal
         ]
-        
+
         for pattern in suspicious_patterns:
             if re.search(pattern, v, re.IGNORECASE):
                 raise ValueError(f"Invalid characters in repository name: {v}")
-        
+
         return v
-    
+
     @field_validator('dependencias')
     @classmethod
-    def validate_dependencies(cls, v):
+    def validate_dependencies(cls, v: list[DependencyItem]) -> list[DependencyItem]:
         """Validate dependencies list."""
         if len(v) > 1000:
             raise ValueError("Too many dependencies (max 1000)")
-        
+
         return v
 
 
@@ -112,7 +111,7 @@ class InventoryPostResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: Literal["ok", "error", "degraded"] = "ok"
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     version: str = Field(default="0.1.0")
     environment: str = Field(default="development")
     checks: dict[str, dict] = Field(default_factory=dict)

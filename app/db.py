@@ -1,5 +1,5 @@
-from contextlib import asynccontextmanager
 import logging
+from contextlib import asynccontextmanager
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 

@@ -1,14 +1,14 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.schemas import Alert, InventoryIn, InventoryPostResponse
+from app.security import require_api_key
 from app.services.nvd import query_nvd
 from app.services.osv import query_osv
 from app.settings import Settings, get_settings
-from app.security import require_api_key
 
 router = APIRouter(
     prefix="/inventario",
@@ -33,7 +33,7 @@ async def recibir_inventario(
     request: Request,
     settings: Settings = Depends(get_settings),
 ) -> InventoryPostResponse:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     stored = data.model_dump()
     stored["fecha"] = now.isoformat()
 
@@ -71,21 +71,21 @@ async def recibir_inventario(
                 seen.add(finding.cve_id)
 
             # OSV
-            for finding in await query_osv(client, name=name, version=version, ecosystem=ecosystem):
-                if finding.cve_id in seen:
+            for osv_finding in await query_osv(client, name=name, version=version, ecosystem=ecosystem):
+                if osv_finding.cve_id in seen:
                     continue
                 alerts.append(
                     Alert(
                         repo=data.repo,
                         name=name,
                         version=version,
-                        cve_id=finding.cve_id,
-                        severity=finding.severity,
-                        score=finding.score,
+                        cve_id=osv_finding.cve_id,
+                        severity=osv_finding.severity,
+                        score=osv_finding.score,
                         source="OSV",
                     )
                 )
-                seen.add(finding.cve_id)
+                seen.add(osv_finding.cve_id)
 
             await asyncio.sleep(settings.request_delay_seconds)
 

@@ -2,15 +2,15 @@
 from typing import Any
 
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError, HTTPException
 
-from app.logging_config import get_logger, log_security_event
+from app.logging_config import get_logger
 
 
 class SecurityAPIException(Exception):
     """Base exception for Security API."""
-    
+
     def __init__(
         self,
         message: str,
@@ -27,7 +27,7 @@ class SecurityAPIException(Exception):
 
 class ValidationException(SecurityAPIException):
     """Exception for validation errors."""
-    
+
     def __init__(self, message: str, details: dict[str, Any] | None = None):
         super().__init__(
             message=message,
@@ -39,7 +39,7 @@ class ValidationException(SecurityAPIException):
 
 class SecurityException(SecurityAPIException):
     """Exception for security-related errors."""
-    
+
     def __init__(self, message: str, details: dict[str, Any] | None = None):
         super().__init__(
             message=message,
@@ -51,7 +51,7 @@ class SecurityException(SecurityAPIException):
 
 class RateLimitException(SecurityAPIException):
     """Exception for rate limiting."""
-    
+
     def __init__(self, message: str = "Rate limit exceeded", details: dict[str, Any] | None = None):
         super().__init__(
             message=message,
@@ -64,7 +64,7 @@ class RateLimitException(SecurityAPIException):
 async def security_api_exception_handler(request: Request, exc: SecurityAPIException) -> JSONResponse:
     """Handle custom Security API exceptions."""
     logger = get_logger("error_handler")
-    
+
     # Log the error
     logger.error(
         "Security API exception",
@@ -76,7 +76,7 @@ async def security_api_exception_handler(request: Request, exc: SecurityAPIExcep
         method=request.method,
         request_id=getattr(request.state, "request_id", "unknown")
     )
-    
+
     # Return structured error response
     return JSONResponse(
         status_code=exc.status_code,
@@ -94,7 +94,7 @@ async def security_api_exception_handler(request: Request, exc: SecurityAPIExcep
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     """Handle FastAPI validation errors."""
     logger = get_logger("error_handler")
-    
+
     # Extract validation errors
     errors = []
     for error in exc.errors():
@@ -103,7 +103,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "message": error["msg"],
             "type": error["type"]
         })
-    
+
     # Log validation error
     logger.warning(
         "Validation error",
@@ -112,7 +112,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         method=request.method,
         request_id=getattr(request.state, "request_id", "unknown")
     )
-    
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
@@ -129,7 +129,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """Handle HTTP exceptions."""
     logger = get_logger("error_handler")
-    
+
     # Log HTTP exception
     logger.warning(
         "HTTP exception",
@@ -139,7 +139,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
         method=request.method,
         request_id=getattr(request.state, "request_id", "unknown")
     )
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -155,7 +155,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle unexpected exceptions."""
     logger = get_logger("error_handler")
-    
+
     # Log unexpected error
     logger.error(
         "Unexpected error",
@@ -165,7 +165,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         method=request.method,
         request_id=getattr(request.state, "request_id", "unknown")
     )
-    
+
     # Don't expose internal error details in production
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
